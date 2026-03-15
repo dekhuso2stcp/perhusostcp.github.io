@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dekhuso2stcp - ระบบจัดการเงินห้อง</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --p: #6366f1; --s: #f43f5e; --in: #10b981; }
+        body { font-family: 'Kanit', sans-serif; background: #f8fafc; margin: 0; display: flex; justify-content: center; }
+        .app { width: 100%; max-width: 420px; background: white; min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .hidden { display: none; }
+        
+        /* แบนเนอร์หน้าแรก */
+        .banner { 
+            width: 100%; height: 230px; 
+<img src="ระบบเก็บเงินห้อง.jpg">background:url('ระบบเก็บเงินห้อง.jpg') center/cover;
+            position: relative; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
+        }
+        .banner-overlay {
+            position: absolute; bottom: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(255,255,255,0.9));
+            border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
+        }
+
+        .content { padding: 25px; }
+        input, select { width: 100%; padding: 14px; margin: 10px 0; border: 2px solid #f1f5f9; border-radius: 15px; font-family: inherit; font-size: 16px; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: var(--p); outline: none; }
+        
+        button { width: 100%; padding: 15px; border: none; border-radius: 15px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 16px; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        .btn-p { background: var(--p); color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+        
+        .card { 
+            background: linear-gradient(135deg, var(--p), #818cf8); 
+            color: white; padding: 25px; border-radius: 25px; text-align: center; margin: 20px 0;
+            box-shadow: 0 10px 20px rgba(99,102,241,0.2);
+        }
+        
+        .log-item { background: #fff; border-radius: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border: 1px solid #f1f5f9; }
+        .admin-box { background: #fff1f2; padding: 20px; border-radius: 25px; border: 2px dashed var(--s); margin-top: 20px; }
+        
+        .profile-img { width: 90px; height: 90px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); object-fit: cover; cursor: pointer; margin-top: -45px; position: relative; z-index: 2; background: #fff; }
+        
+        .tab-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { background: #fff; color: #64748b; flex: 1; padding: 10px; border-radius: 12px; font-size: 14px; border: 1px solid #e2e8f0; }
+        .active-tab { background: var(--s) !important; color: white !important; border: none; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div id="login-view">
+        <div class="banner"></div>
+        <div class="content" style="text-align:center; margin-top: -40px; position: relative;">
+            <h1 style="color:var(--p); margin:0; font-size: 32px;">#dekhuso2stcp</h1>
+            <p style="color:#64748b;">ยินดีต้อนรับสู่ระบบจัดการเงินห้อง</p>
+            <div style="margin-top: 30px;">
+                <input type="number" id="id-input" placeholder="รหัสนักเรียน 5 หลัก">
+                <button class="btn-p" onclick="doLogin()">เข้าสู่ระบบ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-view" class="hidden">
+        <div class="banner" style="height: 150px;">
+            <div class="banner-overlay"></div>
+        </div>
+        
+        <div class="content" style="text-align:center; margin-top: -10px;">
+            <img id="p-img" class="profile-img" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" onclick="document.getElementById('f-input').click()">
+            <input type="file" id="f-input" class="hidden" accept="image/*" onchange="uploadImg(this)">
+            <h2 id="u-name" style="margin:10px 0 0 0; color:#1e293b;">-</h2>
+            <small id="u-role" style="color:var(--p); font-weight: 600;">MEMBER</small>
+
+            <div class="card">
+                <small style="opacity:0.8;">งบประมาณห้องคงเหลือ</small>
+                <h1 id="total-room" style="font-size: 36px; margin: 5px 0;">฿ 0</h1>
+                <div style="display:flex; justify-content: space-around; font-size: 12px; margin-top: 10px;">
+                    <div>รายรับ: <span id="sum-in">0</span></div>
+                    <div>รายจ่าย: <span id="sum-out">0</span></div>
+                </div>
+            </div>
+
+            <p style="font-size: 14px; color:#64748b;">เงินสะสมของคุณ: <b id="my-total" style="color:var(--in);">฿ 0</b></p>
+
+            <div id="admin-view" class="admin-box hidden">
+                <h4 style="margin:0 0 15px 0; color:var(--s);">บันทึกข้อมูล (Admin Only)</h4>
+                <div class="tab-group">
+                    <button id="t-in" class="tab-btn active-tab" onclick="setMode('IN')">รายรับ</button>
+                    <button id="t-out" class="tab-btn" onclick="setMode('OUT')">รายจ่าย</button>
+                </div>
+                <div id="in-field"><select id="std-list"></select></div>
+                <div id="out-field" class="hidden"><input type="text" id="out-desc" placeholder="เช่น ค่าชีทเรียน, ค่าถังน้ำ"></div>
+                <input type="number" id="amt-input" placeholder="จำนวนเงิน">
+                <button onclick="doSave()" id="btn-save" style="background:var(--s); color:white; box-shadow: 0 4px 12px rgba(244,63,94,0.3);">บันทึกข้อมูลทันที</button>
+            </div>
+
+            <h3 style="text-align:left; margin-top: 30px; color:#1e293b;">ประวัติการทำรายการ</h3>
+            <div id="logs" style="text-align:left;">กำลังโหลดข้อมูล...</div>
+            
+            <button onclick="location.reload()" style="margin-top:30px; background:#f1f5f9; color:#64748b;">ออกจากระบบ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const WEB_URL = "https://script.google.com/macros/s/AKfycbx9FqOVtZfq2fagUlT9S1FuyWC1g41dr2pzxE6kBMptNnOGE5QPjNTRia-eAxZAZIvS/exechttps://script.google.com/macros/s/AKfycbx9FqOVtZfq2fagUlT9S1FuyWC1g41dr2pzxE6kBMptNnOGE5QPjNTRia-eAxZAZIvS/exec"; // 🔗 ใส่ลิงก์ /exec ของน้อง
+
+    const STUDENTS = [{id:"36751", name:"ธนัชพร ทิพย์รักษ์"}, {id:"36752", name:"ธิติมาภรณ์ เพิ่มฆะเซ็นต์"}, {id:"36759", name:"พาณิภัค นุยภูเขียว"}, {id:"36768", name:"สุชาวดี ละแมนชัย"}, {id:"36819", name:"กัลญาวรรณ โชควิเศษ"}, {id:"36832", name:"ธิดารัตน์ หาญพนา"}, {id:"36837", name:"พรชรินทร์ สุขสิงห์"}, {id:"36843", name:"เพชรปทิตา ไชยโย"}, {id:"36852", name:"สุวรรณรัตน์ ญาติปราโมทย์"}, {id:"36855", name:"อาทิตยา เพียรชัยภูมิ"}, {id:"36877", name:"พรรณธิดา ศรีวิลัย"}, {id:"36878", name:"พัชราภรณ์ ขันชัยภูมิ"}, {id:"36916", name:"ปิ่นประภา สอนหินลาด"}, {id:"36948", name:"ณฐกานต์ เชื้อนุ่น"}, {id:"36949", name:"ณัชชา เทศนิยม"}, {id:"36950", name:"ณัฏฐ์ชยา บุตตะศรี"}, {id:"36964", name:"พิมพ์รดา แกมคำ"}, {id:"37014", name:"อรณิชา เทศเสนาะ"}, {id:"37026", name:"ณัฐณิชา พันธ์ไชย"}, {id:"37055", name:"อรชพร ดวงประทุม"}, {id:"37063", name:"จิรสุดา เสมา"}, {id:"37070", name:"ณิชากร รักษ์มณี"}, {id:"37104", name:"ญาสุมินร์ ครองถิ่น"}, {id:"37139", name:"ฉันทพิชญา เจือหนองแวง"}, {id:"37141", name:"ชลธิชา โถชัย"}, {id:"37153", name:"ปวรวรรรณ พันธุ์สามารถ"}, {id:"37165", name:"วิภาวี จรแก้ว"}, {id:"37167", name:"วิลาวรรณ กิ่งนอก"}, {id:"37168", name:"วิลาสิณีย์ บุญหว่าน"}, {id:"38664", name:"พัชราภา สังฆตะอำพน"}, {id:"39250", name:"กฤษติยาพร ทองเหง่า"}, {id:"39251", name:"เขมนิจ คำโนนจาน"}, {id:"39252", name:"วทันยา เรืองสีนุ่น"}, {id:"39253", name:"ศิรารัตน์ อาจเค"}, {id:"39254", name:"สุวิชาดา เกษรดอกจันทร์"}, {id:"39255", name:"สิวริศร ไชยพิมพ์"}, {id:"39256", name:"ณัฐพงษ์ เฉลียวชาติ"}, {id:"39257", name:"ภควัติ จันทร์สว่าง"}, {id:"39258", name:"วีระชัย โยธา"}, {id:"39333", name:"ชินพงษ์ วงษา"}];
+
+    let user = null, database = [], mode = 'IN';
+
+    function setMode(m) {
+        mode = m;
+        document.getElementById('t-in').classList.toggle('active-tab', m === 'IN');
+        document.getElementById('t-out').classList.toggle('active-tab', m === 'OUT');
+        document.getElementById('in-field').classList.toggle('hidden', m === 'OUT');
+        document.getElementById('out-field').classList.toggle('hidden', m === 'IN');
+    }
+
+    function doLogin() {
+        const id = document.getElementById('id-input').value;
+        user = STUDENTS.find(s => s.id === id);
+        if(!user) return Swal.fire('ไม่สำเร็จ', 'ไม่พบรหัสนักเรียนนี้จ้า', 'error');
+
+        Swal.fire({ title: 'สำเร็จ!', text: 'ยินดีต้อนรับ ' + user.name, icon: 'success', timer: 1500, showConfirmButton: false });
+
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('main-view').classList.remove('hidden');
+        document.getElementById('u-name').innerText = user.name;
+
+        if(["37141", "39258"].includes(user.id)) {
+            document.getElementById('admin-view').classList.remove('hidden');
+            document.getElementById('u-role').innerText = "ADMIN CONTROL";
+            document.getElementById('std-list').innerHTML = STUDENTS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        }
+        
+        const savedImg = localStorage.getItem('pic_' + user.id);
+        if(savedImg) document.getElementById('p-img').src = savedImg;
+        sync();
+        setInterval(sync, 15000); // ซิงค์อัตโนมัติทุก 15 วิ
+    }
+
+    async function sync() {
+        try {
+            const res = await fetch(WEB_URL);
+            database = await res.json();
+            render();
+        } catch(e) {}
+    }
+
+    function render() {
+        let total = 0, myT = 0, sIn = 0, sOut = 0;
+        const logBox = document.getElementById('logs');
+        logBox.innerHTML = "";
+        database.slice().reverse().forEach(row => {
+            const v = parseFloat(row[2]);
+            total += v;
+            if(v > 0) sIn += v; else sOut += Math.abs(v);
+            if(row[0] == user.id && v > 0) myT += v;
+
+            logBox.innerHTML += `
+                <div class="log-item">
+                    <div><b style="color:#1e293b;">${row[1]}</b><br><small style="color:#94a3b8;">${row[3]}</small></div>
+                    <b style="color:${v<0? 'var(--s)':'var(--in)'}; font-size:16px;">${v>0?'+':''}${v}</b>
+                </div>`;
+        });
+        document.getElementById('total-room').innerText = "฿ " + total.toLocaleString();
+        document.getElementById('sum-in').innerText = "฿" + sIn.toLocaleString();
+        document.getElementById('sum-out').innerText = "฿" + sOut.toLocaleString();
+        document.getElementById('my-total').innerText = "฿ " + myT.toLocaleString();
+    }
+
+    async function doSave() {
+        const amtVal = document.getElementById('amt-input').value;
+        if(!amtVal || amtVal <= 0) return Swal.fire('เตือน', 'กรุณาระบุจำนวนเงินที่ถูกต้อง', 'warning');
+        
+        let amt = parseFloat(amtVal), tName = "", tId = "";
+        if(mode === 'OUT') {
+            amt = -amt;
+            tId = "EXPENSE";
+            tName = "💸 " + document.getElementById('out-desc').value;
+            if(!document.getElementById('out-desc').value) return Swal.fire('เตือน', 'กรุณาใส่รายการรายจ่าย', 'warning');
+        } else {
+            tId = document.getElementById('std-list').value;
+            tName = STUDENTS.find(s => s.id === tId).name;
+        }
+
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true; btn.innerText = "กำลังบันทึก...";
+
+        fetch(WEB_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({id:tId, name:tName, amount:amt, date:new Date().toLocaleString('th-TH'), admin:user.name}) })
+        .then(() => {
+            Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
+            btn.disabled = false; btn.innerText = "บันทึกข้อมูลทันที";
+            document.getElementById('amt-input').value = "";
+            document.getElementById('out-desc').value = "";
+            sync();
+        });
+    }
+
+    function uploadImg(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('p-img').src = e.target.result;
+                localStorage.setItem('pic_' + user.id, e.target.result);
+                Swal.fire({ title: 'สำเร็จ!', text: 'เปลี่ยนรูปโปรไฟล์แล้ว', icon: 'success', timer: 1000, showConfirmButton: false });
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+</body>
+</html>
